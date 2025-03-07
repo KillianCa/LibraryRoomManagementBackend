@@ -2,7 +2,9 @@ package com.library.service;
 
 import com.library.model.User;
 import com.library.repository.UserRepository;
+import com.library.repository.BookingRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -11,9 +13,11 @@ import java.util.Optional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final BookingRepository bookingRepository;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, BookingRepository bookingRepository) {
         this.userRepository = userRepository;
+        this.bookingRepository = bookingRepository;
     }
 
     public User createUser(User user) {
@@ -37,8 +41,14 @@ public class UserService {
                     return userRepository.save(user);
                 }).orElseThrow(() -> new RuntimeException("User not Found"));
     }
-
+    @Transactional
     public void deleteUser(Long id) {
-        userRepository.deleteById(id);
+        Optional<User> user = userRepository.findById(id);
+        if (user.isPresent()) {
+            bookingRepository.deleteByUser(user.get());
+            userRepository.deleteById(id);
+        } else {
+            throw new IllegalArgumentException("User not found");
+        }
     }
 }
