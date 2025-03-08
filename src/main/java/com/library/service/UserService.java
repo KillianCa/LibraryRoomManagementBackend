@@ -3,8 +3,10 @@ package com.library.service;
 import com.library.model.User;
 import com.library.repository.UserRepository;
 import com.library.repository.BookingRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,6 +23,9 @@ public class UserService {
     }
 
     public User createUser(User user) {
+        if (userRepository.findByUsername(user.getUsername()).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username already exists");
+        }
         return userRepository.save(user);
     }
 
@@ -33,14 +38,19 @@ public class UserService {
     }
 
     public User updateUser(Long id, User updatedUser) {
-        return userRepository.findById(id)
-                .map(user -> {
-                    user.setUsername(updatedUser.getUsername());
-                    user.setPassword(updatedUser.getPassword());
-                    user.setRole(updatedUser.getRole());
-                    return userRepository.save(user);
-                }).orElseThrow(() -> new RuntimeException("User not Found"));
+        User existingUser = userRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        Optional<User> userWithSameUsername = userRepository.findByUsername(updatedUser.getUsername());
+        if (userWithSameUsername.isPresent() && userWithSameUsername.get().getId() != id) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username already exists. Choose a different one.");
+        }
+        existingUser.setUsername(updatedUser.getUsername());
+        existingUser.setPassword(updatedUser.getPassword());
+        existingUser.setRole(updatedUser.getRole());
+        return userRepository.save(existingUser);
     }
+
+
     @Transactional
     public void deleteUser(Long id) {
         Optional<User> user = userRepository.findById(id);
