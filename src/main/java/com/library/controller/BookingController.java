@@ -2,6 +2,7 @@ package com.library.controller;
 
 import com.library.model.Booking;
 import com.library.service.BookingService;
+import com.library.dto.BookingRequestDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,15 +20,15 @@ public class BookingController {
     }
 
     @PostMapping
-    public ResponseEntity<Booking> createBooking(
-            @RequestParam Long userId,
-            @RequestParam Long roomId,
-            @RequestParam LocalDateTime startTime,
-            @RequestParam LocalDateTime endTime
-    ) {
+    public ResponseEntity<Booking> createBooking(@RequestBody BookingRequestDTO request) {
         try {
-            Booking booking = bookingService.createBooking(userId, roomId, startTime, endTime);
-            return ResponseEntity.ok(booking);
+            Booking savedBooking = bookingService.createBooking(
+                    request.getUserId(),
+                    request.getRoomId(),
+                    request.getStartTime(),
+                    request.getEndTime()
+            );
+            return ResponseEntity.ok(savedBooking);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(null);
         }
