@@ -2,7 +2,9 @@ package com.library.service;
 
 import com.library.model.Room;
 import com.library.repository.RoomRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,6 +19,10 @@ public class RoomService {
     }
 
     public Room createRoom(Room room) {
+        Optional<Room> existingRoom = roomRepository.findByRoomNumber((room.getRoomNumber()));
+        if(existingRoom.isPresent()){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Room number already exists.");
+        }
         return roomRepository.save(room);
     }
 
